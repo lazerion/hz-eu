@@ -1,0 +1,39 @@
+version: '3'
+services:
+  # client app far jar image (client code and dependencies)
+  eureka-server:
+    image: netflixoss/eureka:1.3.1
+    ports:
+      - "8080:8080"
+    networks:
+      - backend
+
+  # hazelcast imdg
+  hazelcast:
+    image: hz-eu:3
+    ports:
+      - "5701:5701"
+    deploy:
+      replicas: 3
+    networks:
+      - backend
+    volumes:
+        - .:/configFolder
+    environment:
+        - JAVA_OPTS=-Dhazelcast.config=/configFolder/hazelcast.xml
+
+  # visualizer
+  visualizer:
+    image: dockersamples/visualizer:stable
+    ports:
+      - "8081:8080"
+    stop_grace_period: 1m30s
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+
+# networks
+networks:
+  backend:
